@@ -1,9 +1,36 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '/providers/cart_provider.dart';
+import '../database/firebase_service.dart';
 
-class CartPage extends StatelessWidget {
+class CartPage extends StatefulWidget {
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  String nombreCliente = 'Usuario';
+
+  @override
+  void initState() {
+    super.initState();
+    _obtenerNombreCliente();
+  }
+
+  Future<void> _obtenerNombreCliente() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      var data = await FirebaseService().getUserData(user.uid);
+      if (data != null) {
+        setState(() {
+          nombreCliente = data['name'] ?? 'Usuario';
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
@@ -28,7 +55,24 @@ class CartPage extends StatelessWidget {
             )
           : Column(
               children: [
-                // Lista detallada de productos que se va a llevar
+                // Banner superior con el nombre del usuario actual
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  color: const Color(0xFFFF5722).withOpacity(0.15),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_circle, color: Color(0xFFFF5722), size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Pedido a nombre de: $nombreCliente',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Lista de productos
                 Expanded(
                   child: ListView.builder(
                     itemCount: cart.items.length,
@@ -44,7 +88,11 @@ class CartPage extends StatelessWidget {
                           leading: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: item.product.imageUrl.isNotEmpty
-                                ? Image.file(File(item.product.imageUrl), width: 50, height: 50, fit: BoxFit.cover)
+                                ? Image.file(
+                                    File(item.product.imageUrl), 
+                                    width: 50, height: 50, fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => Container(width: 50, height: 50, color: Colors.grey[800], child: const Icon(Icons.broken_image, color: Colors.white24, size: 20)),
+                                  )
                                 : Container(width: 50, height: 50, color: Colors.grey[800], child: const Icon(Icons.image, color: Colors.white24)),
                           ),
                           title: Text(item.product.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -55,20 +103,18 @@ class CartPage extends StatelessWidget {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Botón Restar
                               IconButton(
                                 icon: const Icon(Icons.remove_circle_outline, color: Colors.white54),
                                 onPressed: () => cart.removeSingleItem(productId),
                               ),
                               Text('${item.quantity}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                              // Botón Sumar (Valida stock)
                               IconButton(
                                 icon: const Icon(Icons.add_circle_outline, color: Color(0xFFFFB300)),
                                 onPressed: () {
                                   bool success = cart.addItem(item.product);
                                   if (!success) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('¡Límite alcanzado! No hay más stock disponible en Firebase.'), backgroundColor: Colors.red),
+                                      const SnackBar(content: Text('¡Límite alcanzado! No hay más stock disponible.'), backgroundColor: Colors.red),
                                     );
                                   }
                                 },
@@ -81,70 +127,76 @@ class CartPage extends StatelessWidget {
                   ),
                 ),
                 
-                // PANEL INFERIOR DE SUMA TOTAL Y ACCIÓN
+                // PANEL INFERIOR CON EL TOTAL DE LA SUMA RE-CORREGIDO
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
                     color: Color(0xFF1E1E1E),
                     borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                   ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('TOTAL A COBRAR:', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('\$${cart.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFFFFB300), fontSize: 24, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF5722), // Naranja
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          onPressed: () async {
-                            // Mostrar un círculo de carga mientras actualiza Firebase
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (ctx) => const Center(child: CircularProgressIndicator(color: Color(0xFFFFB300))),
-                            );
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('TOTAL A COBRAR:', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold)),
+                            // Re-calculo directo reactivo desde el Provider
+                            Text('\$${cart.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFFFFB300), fontSize: 24, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF5722), 
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            onPressed: () async {
+                              final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-                            try {
-                              await cart.placeOrder(); // Sube la orden y descuenta el stock
-                              Navigator.pop(context); // Quita el círculo de carga
-                              
-                              // Feedback de éxito con Modal
                               showDialog(
                                 context: context,
-                                builder: (ctx) => AlertDialog(
-                                  backgroundColor: const Color(0xFF1E1E1E),
-                                  title: const Text('¡Orden Registrada!', style: TextStyle(color: Color(0xFFFFB300), fontWeight: FontWeight.bold)),
-                                  content: const Text('El stock ha sido actualizado en Firebase y la orden se guardó con éxito.', style: TextStyle(color: Colors.white70)),
-                                  actions: [
-                                    TextButton(
-                                      child: const Text('OK', style: TextStyle(color: Color(0xFFFF5722))),
-                                      onPressed: () {
-                                        Navigator.pop(ctx); // Cierra el diálogo
-                                        Navigator.pop(context); // Regresa al catálogo limpio
-                                      },
-                                    )
-                                  ],
-                                ),
+                                barrierDismissible: false,
+                                builder: (ctx) => const Center(child: CircularProgressIndicator(color: Color(0xFFFFB300))),
                               );
-                            } catch (e) {
-                              Navigator.pop(context); // Cierra el indicador de carga
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al procesar: $e'), backgroundColor: Colors.red));
-                            }
-                          },
-                          child: const Text('CONFIRMAR ORDEN / PAGAR', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+
+                              try {
+                                await cart.placeOrder(userId, nombreCliente); 
+                                if (!mounted) return;
+                                Navigator.pop(context); // Cierra carga
+                                
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    backgroundColor: const Color(0xFF1E1E1E),
+                                    title: const Text('¡Orden Registrada!', style: TextStyle(color: Color(0xFFFFB300), fontWeight: FontWeight.bold)),
+                                    content: const Text('El stock ha sido actualizado en Firebase y la orden se guardó con éxito.', style: TextStyle(color: Colors.white70)),
+                                    actions: [
+                                      TextButton(
+                                        child: const Text('OK', style: TextStyle(color: Color(0xFFFF5722))),
+                                        onPressed: () {
+                                          Navigator.pop(ctx); 
+                                          Navigator.pop(context); 
+                                        },
+                                      )
+                                    ],
+                                  ),
+                                );
+                              } catch (e) {
+                                Navigator.pop(context); 
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al procesar: $e'), backgroundColor: Colors.red));
+                              }
+                            },
+                            child: const Text('CONFIRMAR ORDEN / PAGAR', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],

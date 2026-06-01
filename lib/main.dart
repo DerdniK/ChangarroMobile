@@ -1,9 +1,12 @@
 import 'package:changarro_movile/pages/catalog_page.dart';
+import 'package:changarro_movile/pages/login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
-import 'package:changarro_movile/providers/cart_provider.dart'; 
+import 'package:changarro_movile/providers/cart_provider.dart';
+
 
 // Manejador en SEGUNDO PLANO (Este sí debe quedarse afuera del main)
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -75,15 +78,34 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // AQUÍ ESTÁ LA MAGIA: Envolvemos la app en el MultiProvider
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: CatalogPage(), 
+        // Usamos un StreamBuilder para vigilar si el usuario tiene sesión activa o no
+        home: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            // Mientras Firebase revisa las credenciales al arrancar
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                backgroundColor: Color(0xFF121212),
+                body: Center(child: CircularProgressIndicator(color: Color(0xFFFFB300))),
+              );
+            }
+            
+            // Si el snapshot tiene datos, el usuario ya se logueó
+            if (snapshot.hasData) {
+              return CatalogPage();
+            }
+            
+            // Si no hay datos, lo mandamos a pedir correo y contraseña
+            return const LoginPage();
+          },
+        ),
       ),
     );
   }
-}
+  }

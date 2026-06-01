@@ -61,7 +61,7 @@ class CartProvider with ChangeNotifier {
   }
 
   // PROCESAR ORDEN: REDUCE STOCK Y CREA LA COLECCIÓN DE "ORDERS"
-  Future<void> placeOrder() async {
+  Future<void> placeOrder(String currentUserId, String customerName) async { // <--- AHORA EXIGE EL ID Y EL NOMBRE
     if (_items.isEmpty) return;
 
     final List<Map<String, dynamic>> orderItems = [];
@@ -70,14 +70,14 @@ class CartProvider with ChangeNotifier {
     WriteBatch batch = _db.batch();
 
     _items.forEach((productId, cartItem) {
-      // 1. Estructurar el producto para el historial de la orden (¡AHORA CON IMAGEN!)
+      // 1. Estructurar el producto para el historial de la orden
       orderItems.add({
         'id': productId,
         'name': cartItem.product.name,
         'quantity': cartItem.quantity,
         'price': cartItem.product.price,
         'category': cartItem.product.category,
-        'imageUrl': cartItem.product.imageUrl, // <-- AQUÍ AGREGAMOS LA IMAGEN
+        'imageUrl': cartItem.product.imageUrl, 
       });
 
       // 2. Preparar la reducción del stock en la colección 'products'
@@ -89,10 +89,12 @@ class CartProvider with ChangeNotifier {
     // 3. Crear el documento de la orden en la colección 'orders'
     DocumentReference orderRef = _db.collection('orders').doc();
     batch.set(orderRef, {
+      'userId': currentUserId, // <--- AÑADIDO PARA QUE COINCIDA CON TU MODELO
+      'customerName': customerName, // <--- GUARDAMOS EL NOMBRE EN LA ORDEN
       'dateTime': Timestamp.now(),
-      'totalAmount': totalAmount, // <-- AQUÍ LE PUSIMOS EL NOMBRE CORRECTO PARA TU MODELO
+      'total': totalAmount, // <--- CAMBIADO A 'total' PARA QUE COINCIDA CON TU OrderModel
       'items': orderItems,
-      'status': 'Pendiente', // Lo dejamos en Pendiente para que lo gestiones después
+      'status': 'Pendiente', 
     });
 
     // 4. Ejecutar todas las operaciones en Firebase simultáneamente

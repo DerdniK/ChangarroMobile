@@ -1,28 +1,31 @@
-// lib/pages/orders_page.dart
-
 import 'package:flutter/material.dart';
 import '../database/firebase_service.dart';
 import '../models/order_model.dart';
-import 'package:intl/intl.dart'; // Asegúrate de tener intl en pubspec.yaml para formatear fechas
+import 'package:intl/intl.dart'; 
 import 'dart:io';
-
+import 'package:firebase_auth/firebase_auth.dart';
 
 class OrdersPage extends StatelessWidget {
   final FirebaseService _firebaseService = FirebaseService();
+  final bool isAdminView; 
 
-  OrdersPage({super.key});
+  OrdersPage({super.key, required this.isAdminView});
 
   @override
   Widget build(BuildContext context) {
+    final String userId = FirebaseAuth.instance.currentUser?.uid ?? 'Invitado';
+    
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Pedidos Entrantes', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFFFFB300),
+        title: Text(isAdminView ? 'PANEL DE CONTROL (ADMIN)' : 'MIS PEDIDOS'),
+        backgroundColor: isAdminView ? const Color(0xFFFF5722) : const Color(0xFFFFB300),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: StreamBuilder<List<OrderModel>>(
-        stream: _firebaseService.getOrders(),
+        stream: _firebaseService.getOrders(
+          userId: isAdminView ? null : userId
+        ),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Color(0xFFFFB300)));
@@ -49,19 +52,17 @@ class OrdersPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final order = orders[index];
               
-              // Formatear la fecha
               final dateFormated = DateFormat('dd/MM/yyyy HH:mm').format(order.date);
 
-              // Determinar el color del estado
               Color statusColor = Colors.grey;
               if (order.status.toLowerCase() == 'pendiente') statusColor = const Color(0xFFFF5722);
-              if (order.status.toLowerCase() == 'entregado') statusColor = Colors.green;
+              if (order.status.toLowerCase() == 'entregado' || order.status.toLowerCase() == 'completada') statusColor = Colors.green;
 
               return Card(
                 color: const Color(0xFF1E1E1E),
                 margin: const EdgeInsets.only(bottom: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ExpansionTile( // ExpansionTile permite desplegar más detalles si quisieras
+                child: ExpansionTile( 
                   iconColor: const Color(0xFFFFB300),
                   collapsedIconColor: Colors.white54,
                   title: Text(
@@ -76,6 +77,7 @@ class OrdersPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      // AQUÍ SE USA totalAmount DIRECTAMENTE
                       Text('\$${order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFFFFB300), fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Container(
@@ -90,10 +92,8 @@ class OrdersPage extends StatelessWidget {
                   ),
                   children: [
                     const Divider(color: Colors.white24, height: 1),
-                    // Usamos .map para convertir la lista de Firebase en Widgets visuales
                     ...order.items.map<Widget>((itemData) {
                       
-                      // Extraemos los datos de cada producto de forma segura
                       final String name = itemData['name'] ?? 'Producto sin nombre';
                       final int quantity = itemData['quantity'] ?? 1;
                       final double price = (itemData['price'] ?? 0.0).toDouble();
@@ -101,7 +101,6 @@ class OrdersPage extends StatelessWidget {
 
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        // 1. LA IMAGEN
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: imageUrl.isNotEmpty
@@ -120,10 +119,8 @@ class OrdersPage extends StatelessWidget {
                                   child: const Icon(Icons.image, color: Colors.white54),
                                 ),
                         ),
-                        // 2. EL NOMBRE Y PRECIO
                         title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                         subtitle: Text('\$${price.toStringAsFixed(2)} c/u', style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                        // 3. LA CANTIDAD
                         trailing: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
@@ -136,13 +133,11 @@ class OrdersPage extends StatelessWidget {
                           ),
                         ),
                       );
-                    }).toList(), // Cierra el map
+                    }).toList(), 
                     
-                    const SizedBox(height: 10), // Un pequeño respiro al final de la lista
+                    const SizedBox(height: 10), 
 
-                    // --- NUEVO BOTÓN DE MARCAR COMO COMPLETADO ---
-                    // Solo mostramos el botón si el pedido no está completado
-                    if (order.status.toLowerCase() != 'completada' && order.status.toLowerCase() != 'completado')
+                    if (isAdminView && order.status.toLowerCase() != 'completada' && order.status.toLowerCase() != 'entregado')
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                         child: SizedBox(
@@ -150,7 +145,7 @@ class OrdersPage extends StatelessWidget {
                           height: 45,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green, // Verde para indicar éxito
+                              backgroundColor: Colors.green, 
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             icon: const Icon(Icons.check_circle, color: Colors.white),
@@ -159,7 +154,6 @@ class OrdersPage extends StatelessWidget {
                               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
                             ),
                             onPressed: () {
-                              // Llamamos a la función mágica pasando el ID de la orden
                               _firebaseService.updateOrderStatus(order.id, 'Completada');
                             },
                           ),

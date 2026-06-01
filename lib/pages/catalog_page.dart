@@ -4,13 +4,12 @@ import 'package:changarro_movile/models/product_model.dart';
 import 'package:changarro_movile/pages/cart_page.dart';
 import 'package:changarro_movile/pages/company_profile_page.dart';
 import 'package:changarro_movile/pages/orders_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
-import '/database/firebase_service.dart';
-import '../models/product_model.dart';
 import '/pages/product_detail_screen.dart';
 import '/providers/cart_provider.dart';
 
@@ -21,6 +20,33 @@ class CatalogPage extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogPage> {
   final FirebaseService _firebaseService = FirebaseService();
+
+  bool isAdmin = false;
+  String nombreUsuario = 'Cargando...'; // <--- NUEVA VARIABLE
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserRole();
+  }
+
+  Future<void> _checkUserRole() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      // Jalamos el mapa completo de datos del usuario
+      var userData = await _firebaseService.getUserData(currentUser.uid);
+      if (userData != null) {
+        setState(() {
+          isAdmin = (userData['role'] == 'admin');
+          nombreUsuario = userData['name'] ?? 'Cliente'; // <--- CAPTURAMOS EL NOMBRE
+        });
+      } else {
+        setState(() {
+          nombreUsuario = 'Cliente'; // Si no hay datos, ponemos un nombre genérico
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,17 +90,18 @@ class _CatalogScreenState extends State<CatalogPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(colors: [Color(0xFFFFB300), Color(0xFFFF5722)], begin: Alignment.topLeft, end: Alignment.bottomRight),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  CircleAvatar(radius: 35, backgroundColor: Colors.black, child: Icon(Icons.store, color: Color(0xFFFFB300), size: 35)),
-                  SizedBox(height: 10),
-                  Text('ChangarroDeSus App', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const CircleAvatar(radius: 35, backgroundColor: Colors.black, child: Icon(Icons.store, color: Color(0xFFFFB300), size: 35)),
+                  const SizedBox(height: 10),
+                  // MUESTRA EL NOMBRE DEL CLIENTE AQUÍ ABAJO:
+                  Text('¡Hola, $nombreUsuario!', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -97,17 +124,45 @@ class _CatalogScreenState extends State<CatalogPage> {
                 _openCartDrawer(context);
               },
             ), 
-            // ---> AÑADE ESTO <---
-            ListTile(
+           ListTile(
               leading: const Icon(Icons.receipt_long, color: Color(0xFFFFB300)),
               title: const Text('Mis Pedidos', style: TextStyle(color: Colors.white)),
               onTap: () {
-                Navigator.pop(context); // Cierra el menú lateral
+                Navigator.pop(context);
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => OrdersPage()),
+                  // FALSO: Vista de cliente normal (solo ve lo suyo)
+                  MaterialPageRoute(builder: (context) => OrdersPage(isAdminView: false)),
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.redAccent),
+              title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
+              onTap: () async {
+                // 1. Cerramos la sesión en Firebase
+                await FirebaseAuth.instance.signOut();
+                
+                // 2. Cerramos el menú lateral
+                if (context.mounted) Navigator.pop(context);
+                
+                // ¡Listo! El StreamBuilder del main.dart detectará el cierre
+                // y te regresará en automático a la pantalla de Login.
+              },
+            ),
+
+            // 2. BOTÓN EXCLUSIVO PARA ADMINS (Solo tú lo verás)
+            if (isAdmin)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings, color: Colors.green),
+                title: const Text('Pedidos Recibidos (Admin)', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    // VERDADERO: Vista de administrador (ve todo y puede completar)
+                    MaterialPageRoute(builder: (context) => OrdersPage(isAdminView: true)),
+                  );
+                },
+              ),
           ],
         ),
       ),
@@ -189,12 +244,14 @@ class _CatalogScreenState extends State<CatalogPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFFFFB300),
-        foregroundColor: Colors.black,
-        child: const Icon(Icons.add_box_rounded, size: 28),
-        onPressed: () => _showAddProductDialog(context),
-      ),
+      floatingActionButton: isAdmin 
+        ? FloatingActionButton(
+            backgroundColor: const Color(0xFFFFB300),
+            foregroundColor: Colors.black,
+            child: const Icon(Icons.add_box_rounded, size: 28),
+            onPressed: () => _showAddProductDialog(context),
+          )
+        : null,
     );
   }
 
