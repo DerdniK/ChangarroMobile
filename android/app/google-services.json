@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "10222707395",
+    "project_id": "changarroapp-14917",
+    "storage_bucket": "changarroapp-14917.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:10222707395:android:84d8ebff77fc84520e3876",
+        "android_client_info": {
+          "package_name": "com.example.changarro_movile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhVzORaNN8OyKJXQ_JV9Nl3hVVxHf1UQg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
