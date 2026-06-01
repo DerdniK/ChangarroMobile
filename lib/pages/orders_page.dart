@@ -77,7 +77,6 @@ class OrdersPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // AQUÍ SE USA totalAmount DIRECTAMENTE
                       Text('\$${order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(color: Color(0xFFFFB300), fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Container(

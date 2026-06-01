@@ -22,7 +22,7 @@ class _CatalogScreenState extends State<CatalogPage> {
   final FirebaseService _firebaseService = FirebaseService();
 
   bool isAdmin = false;
-  String nombreUsuario = 'Cargando...'; // <--- NUEVA VARIABLE
+  String nombreUsuario = 'Cargando...';
 
   @override
   void initState() {
@@ -33,16 +33,16 @@ class _CatalogScreenState extends State<CatalogPage> {
   Future<void> _checkUserRole() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      // Jalamos el mapa completo de datos del usuario
+      // mapo de datos del usuario
       var userData = await _firebaseService.getUserData(currentUser.uid);
       if (userData != null) {
         setState(() {
           isAdmin = (userData['role'] == 'admin');
-          nombreUsuario = userData['name'] ?? 'Cliente'; // <--- CAPTURAMOS EL NOMBRE
+          nombreUsuario = userData['name'] ?? 'Cliente';
         });
       } else {
         setState(() {
-          nombreUsuario = 'Cliente'; // Si no hay datos, ponemos un nombre genérico
+          nombreUsuario = 'Cliente'; // Si no hay datos ponemos cliente como generico
         });
       }
     }
@@ -58,7 +58,7 @@ class _CatalogScreenState extends State<CatalogPage> {
         iconTheme: const IconThemeData(color: Colors.black),
         elevation: 5,
         actions: [
-          // Icono rápido del carrito con contador flotante
+          // carrito con contador flotante
           Consumer<CartProvider>(
             builder: (context, cart, child) => Stack(
               alignment: Alignment.center,
@@ -84,7 +84,7 @@ class _CatalogScreenState extends State<CatalogPage> {
         ],
       ),
       
-      // MENÚ LATERAL (Drawer)
+      // menu de la izquierda
       drawer: Drawer(
         backgroundColor: const Color(0xFF1E1E1E),
         child: ListView(
@@ -100,7 +100,6 @@ class _CatalogScreenState extends State<CatalogPage> {
                 children: [
                   const CircleAvatar(radius: 35, backgroundColor: Colors.black, child: Icon(Icons.store, color: Color(0xFFFFB300), size: 35)),
                   const SizedBox(height: 10),
-                  // MUESTRA EL NOMBRE DEL CLIENTE AQUÍ ABAJO:
                   Text('¡Hola, $nombreUsuario!', style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
@@ -109,8 +108,7 @@ class _CatalogScreenState extends State<CatalogPage> {
               leading: const Icon(Icons.person, color: Color(0xFFFFB300)),
               title: const Text('Mi Perfil', style: TextStyle(color: Colors.white)),
               onTap: () {
-                Navigator.pop(context); // Cierra el menú lateral
-                // Abre la nueva pantalla corporativa
+                Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => CompanyProfilePage()),
                 );
@@ -130,7 +128,7 @@ class _CatalogScreenState extends State<CatalogPage> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.of(context).push(
-                  // FALSO: Vista de cliente normal (solo ve lo suyo)
+                  // como esta en falto solo puede ver sus pedidos
                   MaterialPageRoute(builder: (context) => OrdersPage(isAdminView: false)),
                 );
               },
@@ -139,18 +137,16 @@ class _CatalogScreenState extends State<CatalogPage> {
               leading: const Icon(Icons.logout, color: Colors.redAccent),
               title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.white)),
               onTap: () async {
-                // 1. Cerramos la sesión en Firebase
+                // cerrar sesion en Firebase
                 await FirebaseAuth.instance.signOut();
                 
-                // 2. Cerramos el menú lateral
+                // se cierra el lateral
                 if (context.mounted) Navigator.pop(context);
-                
-                // ¡Listo! El StreamBuilder del main.dart detectará el cierre
-                // y te regresará en automático a la pantalla de Login.
+              
               },
             ),
 
-            // 2. BOTÓN EXCLUSIVO PARA ADMINS (Solo tú lo verás)
+            // boton nomas para admins
             if (isAdmin)
               ListTile(
                 leading: const Icon(Icons.admin_panel_settings, color: Colors.green),
@@ -158,7 +154,7 @@ class _CatalogScreenState extends State<CatalogPage> {
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.of(context).push(
-                    // VERDADERO: Vista de administrador (ve todo y puede completar)
+                    //  aqui puedes aceptar ordenes y ver todas las ordenes como esta en true
                     MaterialPageRoute(builder: (context) => OrdersPage(isAdminView: true)),
                   );
                 },
@@ -255,13 +251,13 @@ class _CatalogScreenState extends State<CatalogPage> {
     );
   }
 
-  // FORMULARIO MODAL AVANZADO CON SELECCIÓN DE IMAGEN LOCAL Y CATEGORÍAS
+  // formulario para agregar los productos que solo se pueden ver desde admin
   void _showAddProductDialog(BuildContext context) {
     final _formKey = GlobalKey<FormState>();
     String name = '';
     double price = 0.0;
     int stock = 0;
-    String selectedCategory = 'Sticker'; // Por defecto
+    String selectedCategory = 'Poster'; // Por defecto
     String localImagePath = '';
 
     final List<String> categories = ['Sticker', 'Poster', 'Botón', 'Pin', 'Postal'];
@@ -291,7 +287,7 @@ class _CatalogScreenState extends State<CatalogPage> {
                         final picker = ImagePicker();
                         final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
                         if (pickedFile != null) {
-                          // Copiar la imagen a la carpeta interna de la app para asegurar la persistencia permanente
+                          // Copiar la imagen a la carpeta interna de la app para asegurar la persistencia en los archivos de la app
                           final appDir = await getApplicationDocumentsDirectory();
                           final fileName = p.basename(pickedFile.path);
                           final File savedImage = await File(pickedFile.path).copy('${appDir.path}/$fileName');
@@ -324,7 +320,7 @@ class _CatalogScreenState extends State<CatalogPage> {
                     onSaved: (v) => name = v!,
                   ),
                   
-                  // DROPDOWN MENÚ PARA CATEGORÍAS
+                  // menu de categorias en forma de lista
                   DropdownButtonFormField<String>(
                     value: selectedCategory,
                     dropdownColor: const Color(0xFF1E1E1E),

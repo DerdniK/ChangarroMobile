@@ -31,19 +31,19 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # Estado y Reactividad
   provider: ^6.1.2 
   
   # Firebase
   firebase_core: ^3.1.0
   cloud_firestore: ^5.0.1
-  firebase_messaging: ^15.0.1 # Para las notificaciones push
-  image_picker: ^1.1.2     # Para seleccionar fotos de la galería o cámara
-  firebase_storage: ^12.4.0 # Para guardar los archivos de imagen en la nube
-  path_provider: ^2.1.3 # Para guardar las fotos de forma permanente en el cel
-  path: ^1.9.0 # Para manejar rutas de archivos
+  firebase_messaging: ^15.0.1 # notificaciones push
+  # firebase_storage: ^12.4.0 # para guardar los archivos de imagen en la nube (yano cobran para subir archivos)
+
+  image_picker: ^1.1.2     # seleccionar fotos de la galería
+  path_provider: ^2.1.3 # para guardar las fotos de forma permanente en el cel
+  path: ^1.9.0 # manejo de rutas de archivos
   google_fonts: ^6.2.1
-  intl: ^0.19.0 # Para formatear precios y fechas
+  intl: ^0.19.0 # formatea fechas y horas y precios
   font_awesome_flutter: ^10.7.0
   url_launcher: ^6.3.0
 
@@ -61,8 +61,6 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/changarromobile.png"
-  # adaptive_icon_background: "#121212" # Tu fondo negro mate
-  # adaptive_icon_foreground: "assets/icon/icon.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:changarro_movile/providers/cart_provider.dart';
 
 
-// Manejador en SEGUNDO PLANO (Este sí debe quedarse afuera del main)
+// notificaciones SEGUNDO PLANO 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("Notificación recibida en segundo plano: ${message.notification?.title}");
@@ -18,14 +18,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    // Solo inicializamos Firebase rápido, sin esperar tokens ni permisos
+    // inicializamos Firebase
     await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   } catch (e) {
     debugPrint("Error inicializando Firebase: $e");
   }
 
-  // ¡Lanzamos la app DE INMEDIATO para evitar la pantalla negra!
   runApp(const MyApp());
 }
 
@@ -40,21 +39,19 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Ejecutamos las notificaciones en el fondo mientras el usuario ya ve la app
+    // Ejecutamos las notis en el fondo mientras ya se ve la app
     _configurarNotificaciones();
   }
 
   Future<void> _configurarNotificaciones() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     
-    // 1. Pedimos permisos
     await messaging.requestPermission(alert: true, badge: true, sound: true);
 
-    // 2. Obtenemos el token
+    // token
     String? token = await messaging.getToken();
-    debugPrint("🔥 FCM Token de tu cel: $token");
+    debugPrint("FCM Token de tu cel: $token");
 
-    // 3. Escuchamos mensajes en PRIMER PLANO
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('¡Notificación recibida con la app abierta!');
       
@@ -84,11 +81,11 @@ class _MyAppState extends State<MyApp> {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        // Usamos un StreamBuilder para vigilar si el usuario tiene sesión activa o no
+        // StreamBuilder para vigilar si el usuario tiene ession activa
         home: StreamBuilder<User?>(
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
-            // Mientras Firebase revisa las credenciales al arrancar
+            // revisa credenciales
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 backgroundColor: Color(0xFF121212),
@@ -96,12 +93,12 @@ class _MyAppState extends State<MyApp> {
               );
             }
             
-            // Si el snapshot tiene datos, el usuario ya se logueó
+            // si tiene datos ya se logeo
             if (snapshot.hasData) {
               return CatalogPage();
             }
             
-            // Si no hay datos, lo mandamos a pedir correo y contraseña
+            // sino pedir login
             return const LoginPage();
           },
         ),

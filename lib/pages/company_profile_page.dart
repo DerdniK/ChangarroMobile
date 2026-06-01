@@ -6,7 +6,7 @@ class CompanyProfilePage extends StatelessWidget {
   final Uri _instagramUrl = Uri.parse('https://www.instagram.com/elchangarrodesus?igsh=YW03NWxjNmE0N3Yz');
 
   Future<void> _launchInstagram() async {
-    // try/catch o mode: LaunchMode.externalApplication fuerza a que abra en la app de IG o el navegador del cel
+    // abre la pagina en ig o en el navegador
     if (!await launchUrl(_instagramUrl, mode: LaunchMode.externalApplication)) {
       throw Exception('No se pudo abrir el enlace $_instagramUrl');
     }
@@ -23,8 +23,8 @@ class CompanyProfilePage extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Column(
+          // seccion principal con el logo y el nombre
           children: [
-            // HEADER CON GRADIENTE Y LOGO DE LA MARCA
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -69,7 +69,7 @@ class CompanyProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // SECCIÓN: QUIÉNES SOMOS
+                  // seccion de quienes somos y que hacemos
                   const Text('NUESTRA FILOSOFÍA', style: TextStyle(color: Color(0xFFFFB300), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   const SizedBox(height: 10),
                   Container(
@@ -83,7 +83,7 @@ class CompanyProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // SECCIÓN: REDES SOCIALES (INSTAGRAM)
+                  // las redes nomas instagram
                   const Text('SÍGUENOS EN REDES', style: TextStyle(color: Color(0xFFFFB300), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   const SizedBox(height: 10),
                   Container(
@@ -97,11 +97,10 @@ class CompanyProfilePage extends StatelessWidget {
                       subtitle: const Text('¡Mira los nuevos drops de stickers y pines!', style: TextStyle(color: Colors.white54, fontSize: 13)),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 16),
                       
-                      // AQUÍ ESTÁ EL CAMBIO IMPORTANTE:
+                      // aqui abre instagram
                       onTap: () async {
                         final Uri url = Uri.parse('https://www.instagram.com/elchangarrodesus?igsh=YW03NWxjNmE0N3Yz');
                         if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                          // Opcional: Puedes mostrar un mensaje en consola o un SnackBar si falla
                           debugPrint('No se pudo abrir el enlace: $url');
                         }
                       },
@@ -110,7 +109,7 @@ class CompanyProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
-                  // SECCIÓN: UBICACIONES / BAZARES
+                  // ubicaciones
                   const Text('DÓNDE ENCONTRARNOS', style: TextStyle(color: Color(0xFFFFB300), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
                   const SizedBox(height: 10),
                   Container(
