@@ -15,7 +15,7 @@ class Product {
     required this.imageUrl,
   });
 
-  // Convertir de Firebase a Objeto
+  // Convertir de firebase a objeto
   factory Product.fromMap(String id, Map<String, dynamic> data) {
     return Product(
       id: id,
@@ -27,7 +27,7 @@ class Product {
     );
   }
 
-  // Convertir de Objeto a Firebase
+  // Convertir de objeto a firebase
   Map<String, dynamic> toMap() {
     return {
       'name': name,

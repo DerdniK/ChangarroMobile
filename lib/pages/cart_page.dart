@@ -55,7 +55,7 @@ class _CartPageState extends State<CartPage> {
             )
           : Column(
               children: [
-                // Banner superior con el nombre del usuario actual
+                // Banner con el nombre del usuario
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -127,7 +127,7 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ),
                 
-                // PANEL INFERIOR CON EL TOTAL DE LA SUMA RE-CORREGIDO
+                // panel inferior con total y boton para pagar
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(

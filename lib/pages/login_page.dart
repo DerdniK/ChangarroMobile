@@ -16,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   
   String email = '';
   String password = '';
-  String username = ''; // <--- NUEVO
+  String username = '';
   bool isLoading = false;
   bool isRegistering = false; 
 
@@ -34,10 +34,10 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       if (isRegistering) {
-        // 1. Crear usuario en Authentication
+        // crea el usuario
         UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
         
-        // 2. Guardar el Nombre de Usuario y Rol en Firestore usando su UID
+        // guarda el usuario y rol con eluid que genero firestore
         await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
           'name': username,
           'role': 'user', // Por defecto entran como clientes
@@ -48,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
           const SnackBar(content: Text('¡Cuenta creada con éxito!'), backgroundColor: Colors.green),
         );
       } else {
-        // Iniciar Sesión normal
+        // iniciar la sesion
         await _auth.signInWithEmailAndPassword(email: email, password: password);
       }
     } on FirebaseAuthException catch (e) {
@@ -93,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 30),
 
-                // Campo Nombre de Usuario (SOLO EN REGISTRO)
+                // pone los campos de nombre y confirmacion solo si esta en modo registro
                 if (isRegistering) ...[
                   TextFormField(
                     style: const TextStyle(color: Colors.white),
@@ -140,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // Campo Confirmar Contraseña (SOLO EN REGISTRO)
+                // Campo Confirmar Contraseña para registro nomas
                 if (isRegistering) ...[
                   TextFormField(
                     style: const TextStyle(color: Colors.white),
@@ -158,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 20),
 
-                // Botón Principal
+                // boton para registrar o iniciar sesion
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(

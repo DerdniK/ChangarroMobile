@@ -24,10 +24,10 @@ class CartProvider with ChangeNotifier {
     return total;
   }
 
-  // AGREGAR VALIDANDO STOCK MÁXIMO
+  // validacion de stock 
   bool addItem(Product product) {
     if (_items.containsKey(product.id)) {
-      // Si añadir uno más supera el stock disponible, detenemos la acción
+      // si se supera el stock se detiene
       if (_items[product.id]!.quantity >= product.stock) {
         return false; 
       }
@@ -60,8 +60,8 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // PROCESAR ORDEN: REDUCE STOCK Y CREA LA COLECCIÓN DE "ORDERS"
-  Future<void> placeOrder(String currentUserId, String customerName) async { // <--- AHORA EXIGE EL ID Y EL NOMBRE
+  // reduce stock y crea la coleccion donde se guardan las ordenes
+  Future<void> placeOrder(String currentUserId, String customerName) async { 
     if (_items.isEmpty) return;
 
     final List<Map<String, dynamic>> orderItems = [];
@@ -70,7 +70,7 @@ class CartProvider with ChangeNotifier {
     WriteBatch batch = _db.batch();
 
     _items.forEach((productId, cartItem) {
-      // 1. Estructurar el producto para el historial de la orden
+      // estructurar cada item para la orden
       orderItems.add({
         'id': productId,
         'name': cartItem.product.name,
@@ -80,27 +80,26 @@ class CartProvider with ChangeNotifier {
         'imageUrl': cartItem.product.imageUrl, 
       });
 
-      // 2. Preparar la reducción del stock en la colección 'products'
+      // reducir el stock en la base de datos
       DocumentReference realRef = _db.collection('products').doc(productId);
       int newStock = cartItem.product.stock - cartItem.quantity;
       batch.update(realRef, {'stock': newStock < 0 ? 0 : newStock});
     });
 
-    // 3. Crear el documento de la orden en la colección 'orders'
+    // crear la orden en la colección 'orders'
     DocumentReference orderRef = _db.collection('orders').doc();
     batch.set(orderRef, {
-      'userId': currentUserId, // <--- AÑADIDO PARA QUE COINCIDA CON TU MODELO
-      'customerName': customerName, // <--- GUARDAMOS EL NOMBRE EN LA ORDEN
+      'userId': currentUserId,
+      'customerName': customerName, 
       'dateTime': Timestamp.now(),
-      'total': totalAmount, // <--- CAMBIADO A 'total' PARA QUE COINCIDA CON TU OrderModel
+      'total': totalAmount, 
       'items': orderItems,
       'status': 'Pendiente', 
     });
 
-    // 4. Ejecutar todas las operaciones en Firebase simultáneamente
+    // ejecutar el batch
     await batch.commit();
 
-    // 5. Limpiar el carrito localmente
     clearCart();
   }
 }

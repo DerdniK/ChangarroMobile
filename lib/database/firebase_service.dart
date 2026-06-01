@@ -5,13 +5,13 @@ import '../models/product_model.dart';
 class FirebaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Obtener productos en tiempo real
+  // Obtener productos
   Stream<List<Product>> getProducts() {
     return _db.collection('products').snapshots().map((snapshot) =>
         snapshot.docs.map((doc) => Product.fromMap(doc.id, doc.data())).toList());
   }
 
-  // Agregar nuevo producto incluyendo la URL de texto
+  // Agregar nuevo producto
   Future<void> addProduct(Product product) async {
     await _db.collection('products').add(product.toMap());
   }
@@ -21,12 +21,12 @@ class FirebaseService {
     await _db.collection('products').doc(id).update({'stock': newStock});
   }
 
-  // Obtener pedidos en tiempo real (Filtrado para clientes, completo para admins)
+  // Obtener pedidos
   Stream<List<OrderModel>> getOrders({String? userId}) {
     CollectionReference ordersRef = _db.collection('orders');
     Query query = ordersRef.orderBy('dateTime', descending: true);
 
-    // Si nos pasan un userId, filtramos para que el cliente solo vea lo suyo
+    // Si hay userid filtramos por ese usuario, si no es admin
     if (userId != null && userId.isNotEmpty) {
       query = query.where('userId', isEqualTo: userId);
     }
@@ -36,7 +36,7 @@ class FirebaseService {
         .toList());
   }
 
-  // Actualizar el estado de un pedido
+  // Actualizar el estado de pedido
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
       await _db.collection('orders').doc(orderId).update({
@@ -47,9 +47,7 @@ class FirebaseService {
     }
   }
 
-  // --- NUEVAS FUNCIONES PARA ROLES Y ADMIN ---
-
-  // Obtener el rol del usuario desde Firestore
+  // Obtener el rol desde Firestore
   Future<String> getUserRole(String uid) async {
     try {
       DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
@@ -63,17 +61,17 @@ class FirebaseService {
     }
   }
 
-  // Actualizar un producto existente (Nombre, precio, etc.)
+  // Actualizar un producto existente
   Future<void> updateProduct(String id, Map<String, dynamic> data) async {
     await _db.collection('products').doc(id).update(data);
   }
 
-  // Eliminar un producto del catálogo
+  // Eliminar un producto del catqlogo
   Future<void> deleteProduct(String id) async {
     await _db.collection('products').doc(id).delete();
   }
 
-  // Obtener los datos completos del usuario (Nombre, Rol, etc.) desde Firestore
+  // Obtener los datos completos del usuario desde db
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
       DocumentSnapshot doc = await _db.collection('users').doc(uid).get();

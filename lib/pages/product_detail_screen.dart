@@ -49,13 +49,13 @@ class ProductDetailScreen extends StatelessWidget {
                   Text('Disponibles para venta: ${product.stock} pzas', style: TextStyle(fontSize: 15, color: Colors.white.withOpacity(0.6))),
                   const SizedBox(height: 40),
 
-                  // BOTONES DE ACCIÓN DINÁMICOS (Lógica del Carrito)
+                  // logica para el carro
                   Consumer<CartProvider>(
                     builder: (context, cart, child) {
                       final isInCart = cart.items.containsKey(product.id);
 
                       if (!isInCart) {
-                        // Estado Inicial: El producto no ha sido añadido
+                        // el producto no esta en el carrito todavia
                         return SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -67,7 +67,7 @@ class ProductDetailScreen extends StatelessWidget {
                           ),
                         );
                       } else {
-                        // Estado Activo: Ya se añadió, dividimos el layout en dos botones coordinados
+                        // ya hay productos en el carrito
                         final currentQty = cart.items[product.id]!.quantity;
                         return Row(
                           children: [
